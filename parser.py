@@ -1,4 +1,5 @@
 import sys
+from models import HubType, Zone, Network
 
 
 class Parser():
@@ -9,20 +10,7 @@ class Parser():
         self.extrac_hubs: dict[str, str] = {}
         self.extrac_connections: dict[str, str] = {}
 
-    def get_configs(self, line: str):
-        key, value = line.split(':', 1)
-        if line.startswith("nb_drones"):
-            self.extrac_nb_drones[key.strip()] = value.strip()
-        elif line.startswith("start_hub"):
-            self.extrac_start_hub[key.strip()] = value.strip()
-        elif line.startswith("end_hub"):
-            self.extrac_end_hub[key.strip()] = value.strip()
-        elif line.startswith("hub"):
-            name = value.split()[0]
-            self.extrac_hubs[name] = value.strip()
-        elif line.startswith("connection"):
-            name0 = value.split()[0]
-            self.extrac_connections[name0] = value.strip()
+        self.network = Network()
 
     def open_map(self, arg_map: str):
         try:
@@ -32,7 +20,33 @@ class Parser():
                     line = line.strip()
                     if not line or line.startswith('#'):
                         continue
-                    self.get_configs(line)
+                    self.extrac_values(line)
+            if self.extrac_nb_drones:
+                num_drones = int(self.extrac_nb_drones["nb_drones"])
+                # preciso de adiconar aqui uma validaçao
+                self.network.nb_drones = num_drones
+            else:
+                print("Error: number of drones not defined")
+                sys.exit(1)
+            if self.extrac_start_hub:
+                start = self.parse_zone(self.extrac_start_hub,
+                                        HubType.START_HUB)
+                # preciso de adiconar aqui uma validaçao
+                self.network.start = start
+            else:
+                print("Error: start hub not defined")
+                sys.exit(1)
+            if self.extrac_end_hub:
+                end = self.parse_zone(self.extrac_end_hub, HubType.END_HUB)
+                # preciso de adiconar aqui uma validaçao
+                self.network.end = end
+            else:
+                print("Error: end hub not defined")
+                sys.exit(1)
+            if self.extrac_hubs:
+                hubs = self.parse_zone(self.extrac_hubs, HubType.HUB)
+                # preciso de adiconar aqui uma validaçao
+                self.network.zones = hubs
 
         except FileNotFoundError:
             print("Error: Map file not found")
@@ -41,18 +55,42 @@ class Parser():
             print("Error: wrong file format")
             sys.exit(1)
 
+    def extrac_values(self, line: str):
+        try:
+            key, value = line.split(':', 1)
+            if line.startswith("nb_drones"):
+                self.extrac_nb_drones[key.strip()] = value.strip()
+            elif line.startswith("start_hub"):
+                self.extrac_start_hub[key.strip()] = value.strip()
+            elif line.startswith("end_hub"):
+                self.extrac_end_hub[key.strip()] = value.strip()
+            elif line.startswith("hub"):
+                name = value.split()[0]
+                self.extrac_hubs[name] = value.strip()
+            elif line.startswith("connection"):
+                name0 = value.split()[0]
+                self.extrac_connections[name0] = value.strip()
+        except (ValueError, IndexError):
+            print("Error: wrong Value")
+            sys.exit(1)
 
-def main():
-    arg_map = sys.argv[1]
-    parse = Parser()
-    parse.open_map(arg_map)
-    print("\ntestes\n======================")
-    print(f"nb_drones: {parse.extrac_nb_drones}")
-    print(f"start: {parse.extrac_start_hub}")
-    print(f"end: {parse.extrac_end_hub}")
-    print(f"hubs: {parse.extrac_hubs}")
-    print(f"connections: {parse.extrac_connections}")
+    def parse_meta(self, meta):
+        meta_result = {}
+        for token in meta:
+            token = token.strip("[]")
+            key, val = token.split("=", 1)
+            meta_result[key] = val
+        return meta_result
 
-
-if __name__ == "__main__":
-    main()
+    def parse_zone(self, value: dict[str, str], role: HubType):
+        result = []
+        for raw in value.values():
+            name, x, y, *meta = raw.split()
+            meta_dict = self.parse_meta(meta)
+            zone = Zone(role, name, int(x), int(y),
+                        zone_type=meta_dict.get("zone", "normal"),
+                        color=meta_dict.get("color"),
+                        max_drones=meta_dict.get("max_drones", "1")
+                        )
+            result.append(zone)
+        return result

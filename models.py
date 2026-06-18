@@ -32,3 +32,12 @@ class Connection():
         self.zone_a = zone_a
         self.zone_b = zone_b
         self.max_link_cap = max_link_cap
+
+
+class Network:
+    def __init__(self) -> None:
+        self.nb_drones: int = 0
+        self.zones: dict[str, Zone] = {}
+        self.connections: list[Connection] = []
+        self.start: Optional[Zone] = None
+        self.end: Optional[Zone] = None
