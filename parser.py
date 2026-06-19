@@ -21,6 +21,7 @@ class Parser():
                     if not line or line.startswith('#'):
                         continue
                     self.extrac_values(line)
+
             if self.extrac_nb_drones:
                 num_drones = int(self.extrac_nb_drones["nb_drones"])
                 # preciso de adiconar aqui uma validaçao
@@ -32,21 +33,24 @@ class Parser():
                 start = self.parse_zone(self.extrac_start_hub,
                                         HubType.START_HUB)
                 # preciso de adiconar aqui uma validaçao
-                self.network.start = start
+                self.network.start = start[0]
+                self.network.zones[start[0].name] = start[0]
             else:
                 print("Error: start hub not defined")
                 sys.exit(1)
             if self.extrac_end_hub:
                 end = self.parse_zone(self.extrac_end_hub, HubType.END_HUB)
                 # preciso de adiconar aqui uma validaçao
-                self.network.end = end
+                self.network.end = end[0]
+                self.network.zones[end[0].name] = end[0]
             else:
                 print("Error: end hub not defined")
                 sys.exit(1)
             if self.extrac_hubs:
                 hubs = self.parse_zone(self.extrac_hubs, HubType.HUB)
                 # preciso de adiconar aqui uma validaçao
-                self.network.zones = hubs
+                for zone in hubs:
+                    self.network.zones[zone.name] = zone
 
         except FileNotFoundError:
             print("Error: Map file not found")
@@ -90,7 +94,9 @@ class Parser():
             zone = Zone(role, name, int(x), int(y),
                         zone_type=meta_dict.get("zone", "normal"),
                         color=meta_dict.get("color"),
-                        max_drones=meta_dict.get("max_drones", "1")
+                        max_drones=int(meta_dict.get("max_drones", 1))
                         )
             result.append(zone)
         return result
+    
+    def parse_connections(self)
