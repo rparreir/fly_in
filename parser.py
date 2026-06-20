@@ -8,11 +8,6 @@ class ParsingError(Exception):
 
 class Parser():
     def __init__(self) -> None:
-        self.extrac_nb_drones: dict[str, str] = {}
-        self.extrac_start_hub: dict[str, str] = {}
-        self.extrac_end_hub: dict[str, str] = {}
-        self.extrac_hubs: dict[str, str] = {}
-        self.extrac_connections: dict[str, str] = {}
         self.first_line = False
 
         self.network = Network()
@@ -34,68 +29,41 @@ class Parser():
             sys.exit(1)
 
     def build_network(self, line: str, idx: int):
-        error_list = []
         try:
-            key, value = line.split(':', 1)
+            _, value = line.split(':', 1)
 
             if line.startswith("nb_drones"):
                 if self.network.nb_drones:
                     raise ParsingError("can only define nb_drones once")
                 self.first_line = True
-                self.extrac_nb_drones[key.strip()] = value.strip()
-                num_drones = int(self.extrac_nb_drones["nb_drones"])
+                num_drones = int(value.strip())
                 # preciso de adiconar aqui uma validaçao
                 self.network.nb_drones = num_drones
-        except (ValueError, IndexError, TypeError, ParsingError) as e:
-            error_list.append(f"Error in (line {idx}): {e}")
-
-        try:
-            if line.startswith("start_hub"):
+            elif line.startswith("start_hub"):
                 if self.network.start:
                     raise ParsingError("can only define starting hub once")
-                self.extrac_start_hub[key.strip()] = value.strip()
                 start = self.parse_zone(value,
                                         HubType.START_HUB)
                 # preciso de adiconar aqui uma validaçao
                 self.network.start = start
                 self.network.zones[start.name] = start
-        except (ValueError, IndexError, TypeError, ParsingError) as e:
-            error_list.append(f"Error in (line {idx}): {e}")
-
-        try:
-            if line.startswith("end_hub"):
+            elif line.startswith("end_hub"):
                 if self.network.end:
                     raise ParsingError("can only define ending hub once")
-                self.extrac_end_hub[key.strip()] = value.strip()
                 end = self.parse_zone(value, HubType.END_HUB)
                 # preciso de adiconar aqui uma validaçao
                 self.network.end = end
                 self.network.zones[end.name] = end
-        except (ValueError, IndexError, TypeError, ParsingError) as e:
-            error_list.append(f"Error in (line {idx}): {e}")
-
-        try:
-            if line.startswith("hub"):
-                name = value.split()[0]
-                self.extrac_hubs[name] = value.strip()
+            elif line.startswith("hub"):
                 hubs = self.parse_zone(value, HubType.HUB)
                 # preciso de adiconar aqui uma validaçao
                 self.network.zones[hubs.name] = hubs
-        except (ValueError, IndexError, TypeError, ParsingError) as e:
-            error_list.append(f"Error in (line {idx}): {e}")
-
-        try:
-            if line.startswith("connection"):
-                name0 = value.split()[0]
-                self.extrac_connections[name0] = value.strip()
+            elif line.startswith("connection"):
                 connect = self.parse_connections(value)
                 self.network.connections.append(connect)
-        except (ValueError, IndexError, TypeError, ParsingError) as e:
-            error_list.append(f"Error in (line {idx}): {e}")
 
-        if error_list:
-            for error in error_list:
-                print(error)
+        except (ValueError, IndexError, TypeError, ParsingError) as e:
+            print(f"Error in (line {idx}): {e}")
             sys.exit(1)
 
     def parse_meta(self, meta):
