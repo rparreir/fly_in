@@ -2,6 +2,10 @@ from enum import Enum
 from typing import Optional
 
 
+class ParsingError(Exception):
+    pass
+
+
 class HubType(Enum):
     START_HUB = "start_hub"
     END_HUB = "end_hub"
