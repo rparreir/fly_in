@@ -61,21 +61,26 @@ class Parser():
                 connect = self.parse_connections(value)
                 self.validator.validate_connection(connect)
                 self.network.connections.append(connect)
+            else:
+                raise ParsingError("Unknown Values")
         except (ValueError, IndexError, TypeError, ParsingError) as e:
             print(f"Error in (line {idx}): {e}")
             sys.exit(1)
 
-    def parse_meta(self, meta: list[str]) -> dict[str, str]:
+    def parse_meta(self, meta: list[str],
+                   allowed: list[str]) -> dict[str, str]:
         meta_result = {}
         for token in meta:
             token = token.strip("[]")
             key, val = token.split("=", 1)
+            if key not in allowed:
+                raise ParsingError(f"Unknown meta key {key}")
             meta_result[key] = val
         return meta_result
 
     def parse_zone(self, value: str, role: HubType) -> Zone:
         name, x, y, *meta = value.split()
-        meta_dict = self.parse_meta(meta)
+        meta_dict = self.parse_meta(meta, ["zone", "color", "max_drones"])
         return Zone(role, name, int(x), int(y),
                     zone_type=meta_dict.get("zone", "normal"),
                     color=meta_dict.get("color"),
@@ -85,7 +90,7 @@ class Parser():
     def parse_connections(self, value: str) -> Connection:
         pair, *meta = value.split()
         zone_a, zone_b = pair.split("-")
-        dict_meta = self.parse_meta(meta)
+        dict_meta = self.parse_meta(meta, ["max_link_capacity"])
         return Connection(zone_a,
                           zone_b,
                           max_link_cap=int(dict_meta.get
