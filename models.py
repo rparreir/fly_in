@@ -40,7 +40,7 @@ class Connection():
 
 
 
-class Network:
+class Network():
     def __init__(self) -> None:
         self.nb_drones: int = 0
         self.zones: dict[str, Zone] = {}
