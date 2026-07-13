@@ -10,8 +10,7 @@ def main():
     arg_map = sys.argv[1]
     parse = Parser()
     parse.open_map(arg_map)
-    print("is running")
-
+    
 
 if __name__ == "__main__":
     main()

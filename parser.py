@@ -23,6 +23,7 @@ class Parser():
                         raise ParsingError("nb_drones must be in the first "
                                            "line!")
             self.validator.validate_network(self.network)
+            self.network.build_adjacency()
         except (FileNotFoundError, ParsingError) as e:
             print(f"Error: {e}")
             sys.exit(1)
