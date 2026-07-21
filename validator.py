@@ -1,4 +1,4 @@
-from models import Zone, Connection, Network, ParsingError
+from models import *
 
 
 VALID_ZONE_TYPES = {"normal", "blocked", "restricted", "priority"}
@@ -12,7 +12,7 @@ class Validator():
     def validate_zone(self, zone: Zone, network: Network) -> None:
         if zone.zone_type not in VALID_ZONE_TYPES:
             raise ParsingError(f"invalid zone type '{zone.zone_type}'")
-        if zone.max_drones <= 0:
+        if zone.hub_type == HubType.HUB and zone.max_drones <= 0:
             raise ParsingError(f"max_drones must be > 0: {zone.max_drones}")
         if "-" in zone.name:
             raise ParsingError(f"invalid name "

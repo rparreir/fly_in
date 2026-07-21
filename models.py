@@ -39,7 +39,6 @@ class Connection():
         
 
 
-
 class Network():
     def __init__(self) -> None:
         self.nb_drones: int = 0

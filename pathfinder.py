@@ -1,5 +1,6 @@
 from models import Network
 import heapq
+import sys
 
 
 
@@ -14,7 +15,7 @@ class Pathfinder():
         elif type_of_zone == "restricted":
             return 2
         elif type_of_zone == "priority":
-            return 1
+            return 0.999
         else:
             return float("inf")
         
@@ -55,3 +56,32 @@ class Pathfinder():
         while path[-1] != start:
             path.append(prev[path[-1]])
         return dist[end], path[::-1]
+    
+    def get_paths(self, start, end):
+        main_path: dict[tuple[str, ...], float] = {}
+        other_paths: dict[tuple[str, ...], float] = {}
+        banned_hubs = set()
+        soma, path = self.find_path(start,
+                                      end,
+                                      banned_hubs)
+        if not path:
+            print("no path")
+            sys.exit(1)
+        for hub in path[1:-1]:
+            banned_hubs.add(hub)
+        key = tuple(path)
+        main_path[key] = round(soma)
+        
+        while True:
+            soma, path = self.find_path(start,
+                                      end,
+                                      banned_hubs)
+            if not path:
+                break
+            key = tuple(path)
+            other_paths[key] = round(soma)
+            for hub in path[1:-1]:
+                banned_hubs.add(hub)
+        
+        
+        return main_path, other_paths
