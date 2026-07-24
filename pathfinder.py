@@ -58,19 +58,8 @@ class Pathfinder():
         return dist[end], path[::-1]
     
     def get_paths(self, start, end):
-        main_path: dict[tuple[str, ...], float] = {}
-        other_paths: dict[tuple[str, ...], float] = {}
+        paths: dict[tuple[str, ...], float] = {}
         banned_hubs = set()
-        soma, path = self.find_path(start,
-                                      end,
-                                      banned_hubs)
-        if not path:
-            print("no path")
-            sys.exit(1)
-        for hub in path[1:-1]:
-            banned_hubs.add(hub)
-        key = tuple(path)
-        main_path[key] = round(soma)
         
         while True:
             soma, path = self.find_path(start,
@@ -79,9 +68,9 @@ class Pathfinder():
             if not path:
                 break
             key = tuple(path)
-            other_paths[key] = round(soma)
+            paths[key] = round(soma)
             for hub in path[1:-1]:
                 banned_hubs.add(hub)
         
         
-        return main_path, other_paths
+        return paths

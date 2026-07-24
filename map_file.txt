@@ -1,40 +1,18 @@
-# 3 caminhos disjuntos, com custos DIFERENTES
-#   mais rapido: start -> A -> B -> C -> end        (3 hubs, custo 4)
-#   alternativo: start -> D -> E -> F -> G -> end   (4 hubs, custo 5)
-#   alternativo: start -> H -> I -> J -> K -> end   (4 hubs, custo 5)
-nb_drones: 5
+# Medium Level 2: Circular loop with restricted zones
+nb_drones: 6
 
-start_hub: start 0 3 [color=green]
-end_hub: end 10 3 [color=yellow]
+start_hub: start 0 0 [color=green max_drones=6]
+hub: loop_a 1 0 [color=orange max_drones=2]
+hub: loop_b 2 0 [color=orange max_drones=2]
+hub: loop_c 2 1 [color=orange max_drones=2]
+hub: loop_d 1 1 [color=orange max_drones=2]
+hub: exit_point 3 0 [zone=restricted color=blue]
+end_hub: goal 4 0 [color=red max_drones=6]
 
-hub: A 2 1 [color=blue]
-hub: B 5 1 [color=blue]
-hub: C 8 1 [color=blue]
-
-hub: D 2 3 [color=cyan]
-hub: E 4 3 [color=cyan]
-hub: F 6 3 [color=cyan]
-hub: G 8 3 [color=cyan]
-
-hub: H 2 5 [color=orange]
-hub: I 4 5 [color=orange]
-hub: J 6 5 [color=orange]
-hub: K 8 5 [color=orange]
-
-connection: start-A
-connection: A-B
-connection: B-C
-connection: C-end
-
-connection: start-D
-connection: D-E
-connection: E-F
-connection: F-G
-connection: G-end
-
-connection: start-H
-connection: H-I
-connection: I-J
-connection: J-K
-connection: K-end
-
+connection: start-loop_a [max_link_capacity=2]
+connection: loop_a-loop_b [max_link_capacity=2]
+connection: loop_b-loop_c [max_link_capacity=2]
+connection: loop_c-loop_d [max_link_capacity=2]
+connection: loop_d-loop_a [max_link_capacity=2]
+connection: loop_b-exit_point
+connection: exit_point-goal

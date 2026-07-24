@@ -1,6 +1,5 @@
 from parser import Parser
 import sys
-from pathfinder import *
 from simulator import Simulator
 
 def main():
@@ -11,12 +10,7 @@ def main():
     arg_map = sys.argv[1]
     parse = Parser()
     parse.open_map(arg_map)
-    
-    pathfinder = Pathfinder(parse.network)
-    main_path, other_paths = pathfinder.get_paths(parse.network.start.name,
-                                                  parse.network.end.name)
-    
-    sim = Simulator(parse.network, main_path, parse.network.nb_drones)
+    sim = Simulator(parse.network, parse.network.nb_drones)
     sim.simulate_travel()
     
     
