@@ -36,7 +36,6 @@ class Connection():
         self.zone_a = zone_a
         self.zone_b = zone_b
         self.max_link_cap = max_link_cap
-        
 
 
 class Network():
@@ -54,4 +53,3 @@ class Network():
         for con in self.connections:
             self.adjacency[con.zone_a].append(con.zone_b)
             self.adjacency[con.zone_b].append(con.zone_a)
-

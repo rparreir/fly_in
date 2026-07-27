@@ -1,4 +1,4 @@
-from models import *
+from models import ParsingError, Zone, Connection, Network, HubType
 
 
 VALID_ZONE_TYPES = {"normal", "blocked", "restricted", "priority"}
