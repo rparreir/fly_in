@@ -4,7 +4,7 @@ run:
 	python3 main.py $(MAP)
 
 vis:
-	python3 main.py $(MAP) --vis
+	SDL_AUDIODRIVER=dummy python3 main.py $(MAP) --vis
 
 t:
 	python3 claude_visualizer.py $(MAP)

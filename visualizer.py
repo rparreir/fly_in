@@ -18,6 +18,11 @@ class Visualizer:
         self.screen = pygame.display.set_mode((self.W, self.H))
         self.clock = pygame.time.Clock()
         self.last_time = 0
+        self.t = 0.0
+        self.font_hubs = pygame.font.SysFont("monospace", 8)
+        self.font_drones = pygame.font.SysFont("monospace", 15)
+        self.font_info = pygame.font.SysFont("monospace", 12)
+        self.current_turn = 0
 
     def bounding_box(self):
         min_x = float("inf")
@@ -45,25 +50,35 @@ class Visualizer:
         return int(px), int(py)
 
     def draw_hubs(self):
+        name_color = (150, 220, 170)
         for zone in self.network.zones.values():
             col = zone.color
             if col:
                 try:
                     color = pygame.Color(col)
                 except ValueError:
-                    color = pygame.Color(22, 60, 40)
+                    color = pygame.Color(120, 200, 120)
             else:
-                color = pygame.Color(22, 60, 40)
+                color = pygame.Color(120, 200, 120)
             px, py = self.to_screen(zone.x, zone.y)
             if zone.hub_type == HubType.START_HUB:
                 pygame.draw.circle(self.screen,
-                                   (color), (px, py), 20)
+                                   (color), (px, py), 35)
+                label = self.font_hubs.render(f"{zone.name}", True,
+                                              (name_color))
+                self.screen.blit(label, (int(px) + 25, int(py) + 25))
             elif zone.hub_type == HubType.END_HUB:
                 pygame.draw.circle(self.screen,
-                                   (color), (px, py), 20)
+                                   (color), (px, py), 35)
+                label = self.font_hubs.render(f"{zone.name}", True,
+                                              (name_color))
+                self.screen.blit(label, (int(px) + 25, int(py) + 25))
             else:
                 pygame.draw.circle(self.screen,
                                    (color), (px, py), 12)
+                label = self.font_hubs.render(f"{zone.name}", True,
+                                              (name_color))
+                self.screen.blit(label, (int(px) + 10, int(py) + 10))
 
     def draw_connections(self):
         for conn in self.network.connections:
@@ -116,23 +131,61 @@ class Visualizer:
         for turn in self.turn:
             for token in turn:
                 resto = token[1:]
-                drone, zona = resto.split("-", 1)
-                pos[int(drone)] = zona
+                drone, _, dest = resto.partition("-")
+                if "-" in dest:
+                    a, b = dest.split("-", 1)
+                    pos[int(drone)] = a + ">" + b
+                else:
+                    pos[int(drone)] = dest
             states.append(dict(pos))
         return states
 
-    def draw_drones(self):
-        for drone, zona in self.states[self.current_pos].items():
-            z = self.network.zones[zona]
-            px, py = self.to_screen(z.x, z.y)
-            pygame.draw.circle(self.screen, ("yellow"), (px, py), 5)
+    def zone_xy(self, state):
+        if state in self.network.zones:
+            z = self.network.zones[state]
+            return z.x, z.y
+        a, b = state.split(">", 1)
+        za, zb = self.network.zones[a], self.network.zones[b]
+        return (za.x + zb.x) / 2, (za.y + zb.y) / 2
 
-    def advance_time(self):
+    def draw_drones(self):
+        next_p = min(self.current_pos + 1, len(self.states) - 1)
+        for drone, zona in self.states[self.current_pos].items():
+            ax, ay = self.to_screen(*self.zone_xy(zona))
+            bx, by = self.to_screen(*self.zone_xy(self.states[next_p][drone]))
+            x = ax + (bx - ax) * self.t
+            y = ay + (by - ay) * self.t
+
+            pygame.draw.circle(self.screen,
+                               (120, 255, 150), (int(x), int(y)), 5)
+            label = self.font_drones.render(f"D{drone}", True, (120, 255, 150))
+            if drone % 2 == 0:
+                self.screen.blit(label, (int(x) - 10, int(y) + 13))
+            else:
+                self.screen.blit(label, (int(x) - 6, int(y) - 30))
+
+    def advance_turn(self):
         now = pygame.time.get_ticks()
-        if now - self.last_time > 7000:
-            self.last_time = now
+        dt = now - self.last_time
+        self.last_time = now
+        self.t += dt / 1500
+        if self.t >= 1 and self.current_pos < len(self.states) - 1:
+            self.t = 0
+            self.current_turn += 1
             if self.current_pos < len(self.states) - 1:
                 self.current_pos += 1
+
+    def draw_current_turn(self):
+        lb_t = self.font_drones.render(f"CURRENT TURN - [{self.current_turn}]",
+                                       True, (120, 255, 150))
+        self.screen.blit(lb_t, (30, 30))
+        if self.current_pos == len(self.states) - 1:
+            all_land = self.font_drones.render("ALL DRONES HAVE LANDED",
+                                               True, (120, 255, 150))
+            self.screen.blit(all_land, (230, 30))
+        info_lab = self.font_info.render("[SPACE] - RESTART",
+                                         True, (150, 220, 170))
+        self.screen.blit(info_lab, (50, 60))
 
     def run(self):
         try:
@@ -142,16 +195,21 @@ class Visualizer:
                 self.make_radar_rings()
                 self.draw_radar_lines()
                 self.draw_connections()
-                self.draw_hubs()
-                self.advance_time()
+                self.advance_turn()
                 self.draw_drones()
+                self.draw_hubs()
                 self.draw_sweep()
+                self.draw_current_turn()
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         running = False
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             running = False
+                        elif event.key == pygame.K_SPACE:
+                            self.current_pos = 0
+                            self.t = 0
+                            self.current_turn = 0
                 pygame.display.flip()
                 self.clock.tick(60)
             pygame.quit()
