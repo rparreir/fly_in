@@ -72,7 +72,8 @@ class Simulator():
                 and travessias.get(link, 0)
                 < self.link_capacity(current, next_hub))
 
-    def simulate_travel(self) -> None:
+    def simulate_travel(self) -> list[list[str]]:
+        all_turns = []
         while True:
             if self.check_if_all_landed():
                 break
@@ -86,6 +87,7 @@ class Simulator():
                 ocupation[zona] = ocupation.get(zona, 0) + 1
 
             turn_events = []
+
             for d in self.drones:
                 if d.pos == len(d.path) - 1:
                     continue
@@ -115,4 +117,7 @@ class Simulator():
                     turn_events.append(f"D{d.id}-{next_hub}")
 
             if turn_events:
+                all_turns.append(turn_events)
                 print(" ".join(turn_events))
+
+        return all_turns

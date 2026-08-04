@@ -14,9 +14,10 @@ def main() -> None:
     parse = Parser()
     parse.open_map(arg_map)
     sim = Simulator(parse.network, parse.network.nb_drones)
-    sim.simulate_travel()
+    turn = sim.simulate_travel()
+
     if "--vis" in sys.argv:
-        Visualizer(parse.network).run()
+        Visualizer(parse.network, turn).run()
 
 
 if __name__ == "__main__":

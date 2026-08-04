@@ -6,6 +6,9 @@ run:
 vis:
 	python3 main.py $(MAP) --vis
 
+t:
+	python3 claude_visualizer.py $(MAP)
+
 easy:
 	@bash -c 'select f in maps/easy/*.txt; do python3 main.py "$$f"; break; done'
 
