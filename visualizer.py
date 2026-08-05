@@ -214,4 +214,4 @@ class Visualizer:
                 self.clock.tick(60)
             pygame.quit()
         except KeyboardInterrupt:
-            print("Adeus")
+            print("\nAdeus")

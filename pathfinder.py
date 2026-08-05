@@ -66,6 +66,8 @@ class Pathfinder():
             if not path:
                 break
             key = tuple(path)
+            if key in paths:
+                break
             paths[key] = round(soma)
             for hub in path[1:-1]:
                 banned_hubs.add(hub)

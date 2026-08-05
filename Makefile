@@ -6,11 +6,11 @@ run:
 vis:
 	SDL_AUDIODRIVER=dummy python3 main.py $(MAP) --vis
 
-t:
-	python3 claude_visualizer.py $(MAP)
+select_map:
+	@bash -c 'select d in maps/*/; do select f in "$$d"*.txt; do python3 main.py "$$f"; break; done; break; done'
 
-easy:
-	@bash -c 'select f in maps/easy/*.txt; do python3 main.py "$$f"; break; done'
+select_map_vis:
+	@bash -c 'select d in maps/*/; do select f in "$$d"*.txt; do python3 main.py "$$f" --vis; break; done; break; done'
 
 lint:
 	flake8 .
