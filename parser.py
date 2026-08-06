@@ -1,16 +1,21 @@
+"""Read a map file line by line and build the Network."""
 import sys
 from models import HubType, Zone, Network, Connection, ParsingError
 from validator import Validator
 
 
 class Parser():
+    """Parse a map file into a Network, validating each element."""
+
     def __init__(self) -> None:
+        """Initialise an empty network and its validator."""
         self.first_line = False
 
         self.network = Network()
         self.validator = Validator()
 
     def open_map(self, arg_map: str) -> None:
+        """Read the map file, build the network, then validate it."""
         try:
             with open(arg_map) as map:
                 for idx, line in enumerate(map, 1):
@@ -29,6 +34,7 @@ class Parser():
             sys.exit(1)
 
     def build_network(self, line: str, idx: int) -> None:
+        """Dispatch a single line to the right parser by its prefix."""
         try:
             _, value = line.split(':', 1)
 
@@ -70,6 +76,7 @@ class Parser():
 
     def parse_meta(self, meta: list[str],
                    allowed: list[str]) -> dict[str, str]:
+        """Parse bracketed key=value metadata against allowed keys."""
         meta_result = {}
         for token in meta:
             token = token.strip("[]")
@@ -80,6 +87,7 @@ class Parser():
         return meta_result
 
     def parse_zone(self, value: str, role: HubType) -> Zone:
+        """Build a Zone from a hub line's value and metadata."""
         name, x, y, *meta = value.split()
         meta_dict = self.parse_meta(meta, ["zone", "color", "max_drones"])
         return Zone(role, name, int(x), int(y),
@@ -89,6 +97,7 @@ class Parser():
                     )
 
     def parse_connections(self, value: str) -> Connection:
+        """Build a Connection from a connection line's value."""
         pair, *meta = value.split()
         zone_a, zone_b = pair.split("-")
         dict_meta = self.parse_meta(meta, ["max_link_capacity"])

@@ -1,10 +1,14 @@
+"""Turn-based drone movement simulation with load balancing."""
 from pathfinder import Pathfinder
 from models import Network
 import sys
 
 
 class Drone:
+    """A drone with its assigned path and current position."""
+
     def __init__(self, drone_id: int, path: list[str]) -> None:
+        """Store the drone id and path; start at the first hub."""
         self.id = drone_id
         self.path = path
         self.pos = 0
@@ -12,7 +16,10 @@ class Drone:
 
 
 class Simulator():
+    """Assign drones to disjoint paths and simulate them per turn."""
+
     def __init__(self, network: Network, nb_drones: int) -> None:
+        """Compute disjoint paths and greedily distribute the drones."""
         self.network = network
         pathfinder = Pathfinder(network)
         assert network.start is not None and network.end is not None
@@ -37,6 +44,7 @@ class Simulator():
 
     def check_availability(self, check_hub: str,
                            ocupation: dict[str, int]) -> bool:
+        """True if the hub has room (start/end are unlimited)."""
         assert self.network.start is not None
         assert self.network.end is not None
         if check_hub in (self.network.start.name, self.network.end.name):
@@ -45,12 +53,14 @@ class Simulator():
         return ocupation.get(check_hub, 0) < hub_capacity
 
     def link_capacity(self, a: str, b: str) -> int:
+        """Return the max simultaneous crossings of a connection."""
         for con in self.network.connections:
             if {con.zone_a, con.zone_b} == {a, b}:
                 return con.max_link_cap
         return 1
 
     def is_zone_restric(self, zone_name: str) -> bool:
+        """True if the named zone is restricted."""
         for name, zone in self.network.zones.items():
             if name == zone_name:
                 if zone.zone_type == "restricted":
@@ -58,6 +68,7 @@ class Simulator():
         return False
 
     def check_if_all_landed(self) -> bool:
+        """True once every drone reached the end of its path."""
         for d in self.drones:
             last_hub = len(d.path) - 1
             if last_hub != d.pos:
@@ -67,12 +78,14 @@ class Simulator():
     def can_move(self, current: str, next_hub: str,
                  ocupation: dict[str, int],
                  travessias: dict[frozenset[str], int]) -> bool:
+        """True if the next hub has room and the link is under capacity."""
         link = frozenset({current, next_hub})
         return (self.check_availability(next_hub, ocupation)
                 and travessias.get(link, 0)
                 < self.link_capacity(current, next_hub))
 
     def simulate_travel(self) -> list[list[str]]:
+        """Advance drones turn by turn; print and return the moves."""
         all_turns = []
         while True:
             if self.check_if_all_landed():

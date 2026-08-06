@@ -1,12 +1,17 @@
+"""Dijkstra-based pathfinding and disjoint-path extraction."""
 from models import Network
 import heapq
 
 
 class Pathfinder():
+    """Find shortest and disjoint paths through the network."""
+
     def __init__(self, network: Network) -> None:
+        """Store the network to search."""
         self.network = network
 
     def cost_calculator(self, name: str) -> float:
+        """Return the cost of entering a zone by its type."""
         type_of_zone = self.network.zones[name].zone_type
         if type_of_zone == "normal":
             return 1
@@ -19,6 +24,7 @@ class Pathfinder():
 
     def find_path(self, start: str, end: str,
                   banned_hub: set[str]) -> tuple[float, list[str]]:
+        """Dijkstra shortest path from start to end, skipping banned hubs."""
         dist: dict[str, float] = {name: float("inf")
                                   for name in self.network.zones}
         dist[start] = 0
@@ -58,6 +64,7 @@ class Pathfinder():
 
     def get_paths(self, start: str,
                   end: str) -> dict[tuple[str, ...], float]:
+        """Return disjoint paths by banning each path's inner hubs in turn."""
         paths: dict[tuple[str, ...], float] = {}
         banned_hubs: set[str] = set()
 

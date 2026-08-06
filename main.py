@@ -1,10 +1,11 @@
+"""Entry point: parse a map, run the simulation, optionally visualize."""
 from parser import Parser
 import sys
 from simulator import Simulator
-from visualizer import Visualizer
 
 
 def main() -> None:
+    """Parse argv, run the simulation, and launch the visualizer if asked."""
     try:
         arg_len = len(sys.argv)
         if arg_len < 2 or arg_len > 3:
@@ -18,6 +19,7 @@ def main() -> None:
         turn = sim.simulate_travel()
 
         if "--vis" in sys.argv:
+            from visualizer import Visualizer
             Visualizer(parse.network, turn).run()
     except KeyboardInterrupt:
         print("Program Interrupted")

@@ -1,10 +1,14 @@
+"""Pygame radar-style visualizer for the fly-in drone simulation."""
 import pygame
-from models import HubType
+from models import HubType, Network
 import math
 
 
 class Visualizer:
-    def __init__(self, network, turn: list[list[str]]):
+    """Render the network as a radar and animate the drones turn by turn."""
+
+    def __init__(self, network: Network, turn: list[list[str]]) -> None:
+        """Build the per-turn drone states and set up the pygame window."""
         self.network = network
         self.turn = turn
         self.current_pos = 0
@@ -24,7 +28,8 @@ class Visualizer:
         self.font_info = pygame.font.SysFont("monospace", 12)
         self.current_turn = 0
 
-    def bounding_box(self):
+    def bounding_box(self) -> tuple[float, float, float, float]:
+        """Return (min_x, max_x, min_y, max_y) of all zone coordinates."""
         min_x = float("inf")
         max_x = float("-inf")
         min_y = float("inf")
@@ -40,7 +45,8 @@ class Visualizer:
                 max_y = zone.y
         return min_x, max_x, min_y, max_y
 
-    def to_screen(self, x, y):
+    def to_screen(self, x: float, y: float) -> tuple[int, int]:
+        """Convert map (x, y) to screen pixels within the margin."""
         range_x = self.max_x - self.min_x
         range_y = self.max_y - self.min_y
         norm_x = (x - self.min_x) / range_x if range_x else 0.5
@@ -49,7 +55,8 @@ class Visualizer:
         py = self.M + norm_y * (self.H - 2 * self.M)
         return int(px), int(py)
 
-    def draw_hubs(self):
+    def draw_hubs(self) -> None:
+        """Draw every zone as a coloured circle with its name."""
         name_color = (150, 220, 170)
         for zone in self.network.zones.values():
             col = zone.color
@@ -80,7 +87,8 @@ class Visualizer:
                                               (name_color))
                 self.screen.blit(label, (int(px) + 10, int(py) + 10))
 
-    def draw_connections(self):
+    def draw_connections(self) -> None:
+        """Draw a line for each connection between two zones."""
         for conn in self.network.connections:
             a = self.network.zones[conn.zone_a]
             b = self.network.zones[conn.zone_b]
@@ -88,20 +96,23 @@ class Visualizer:
             point_b = self.to_screen(b.x, b.y)
             pygame.draw.line(self.screen, (22, 60, 30), point_a, point_b, 2)
 
-    def make_radar_rings(self):
+    def make_radar_rings(self) -> None:
+        """Draw the concentric radar rings centred on the screen."""
         r = 3000
         while r > 0:
             pygame.draw.circle(self.screen, (22, 60, 40),
                                (self.W // 2, self.H // 2), r, 1)
             r -= 150
 
-    def draw_radar_lines(self):
+    def draw_radar_lines(self) -> None:
+        """Draw the radar crosshair (centre horizontal and vertical lines)."""
         x, y = self.screen.get_size()
         cx, cy = (x // 2), (y // 2)
         pygame.draw.line(self.screen, (22, 60, 40), (0, cy), (x, cy), 1)
         pygame.draw.line(self.screen, (22, 60, 40), (cx, 0), (cx, y), 1)
 
-    def draw_sweep(self):
+    def draw_sweep(self) -> None:
+        """Advance and draw the rotating radar sweep with a fading trail."""
         self.sweep_angle += 0.02
         cx, cy = (self.W // 2), (self.H // 2)
         raio = 3000
@@ -122,7 +133,9 @@ class Visualizer:
                              (cx, cy), (ex, ey), 3)
         self.screen.blit(surf, (0, 0))
 
-    def build_states(self):
+    def build_states(self) -> list[dict[int, str]]:
+        """Reconstruct each drone's zone per turn from the sim output."""
+        assert self.network.start is not None
         start_name = self.network.start.name
         n_drones = self.network.nb_drones
         pos = {i: start_name for i in range(1, n_drones + 1)}
@@ -140,7 +153,8 @@ class Visualizer:
             states.append(dict(pos))
         return states
 
-    def zone_xy(self, state):
+    def zone_xy(self, state: str) -> tuple[float, float]:
+        """Coords of a state: a zone, or a connection midpoint if in flight."""
         if state in self.network.zones:
             z = self.network.zones[state]
             return z.x, z.y
@@ -148,7 +162,8 @@ class Visualizer:
         za, zb = self.network.zones[a], self.network.zones[b]
         return (za.x + zb.x) / 2, (za.y + zb.y) / 2
 
-    def draw_drones(self):
+    def draw_drones(self) -> None:
+        """Draw each drone, interpolating between its current and next zone."""
         next_p = min(self.current_pos + 1, len(self.states) - 1)
         for drone, zona in self.states[self.current_pos].items():
             ax, ay = self.to_screen(*self.zone_xy(zona))
@@ -164,7 +179,8 @@ class Visualizer:
             else:
                 self.screen.blit(label, (int(x) - 6, int(y) - 30))
 
-    def advance_turn(self):
+    def advance_turn(self) -> None:
+        """Advance the interpolation clock and step to the next turn."""
         now = pygame.time.get_ticks()
         dt = now - self.last_time
         self.last_time = now
@@ -175,7 +191,8 @@ class Visualizer:
             if self.current_pos < len(self.states) - 1:
                 self.current_pos += 1
 
-    def draw_current_turn(self):
+    def draw_current_turn(self) -> None:
+        """Draw the HUD: current turn, landing status and controls."""
         lb_t = self.font_drones.render(f"CURRENT TURN - [{self.current_turn}]",
                                        True, (120, 255, 150))
         self.screen.blit(lb_t, (30, 30))
@@ -187,7 +204,8 @@ class Visualizer:
                                          True, (150, 220, 170))
         self.screen.blit(info_lab, (50, 60))
 
-    def run(self):
+    def run(self) -> None:
+        """Run the main game loop until the window is closed."""
         try:
             running = True
             while running:
